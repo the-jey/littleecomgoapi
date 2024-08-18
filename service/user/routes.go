@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 	"github.com/the-jey/littleecomgoapi/service/auth"
 	"github.com/the-jey/littleecomgoapi/types"
@@ -28,8 +29,16 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {}
 func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	// Get json payload
 	var payload types.RegisterUserPayload
-	if err := utils.ParseJSON(r, payload); err != nil {
+	if err := utils.ParseJSON(r, &payload); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// Validate the payload
+	if err := utils.Validate.Struct(payload); err != nil {
+		error := err.(validator.ValidationErrors)
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid payload %v", error))
+		return
 	}
 
 	// Check if the user exists
